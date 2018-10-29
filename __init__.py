@@ -1,10 +1,17 @@
 import struct
 import re
 import json
+import os
 from binaryninja import *
 
-class GBA(Architecture):
-    name = "GBA"
+# from https://gis.stackexchange.com/questions/130027/getting-a-plugin-path-using-python-in-qgis
+def resolve(name, basepath=None):
+    if not basepath:
+      basepath = os.path.dirname(os.path.realpath(__file__))
+    return os.path.join(basepath, name)
+
+class GB(Architecture):
+    name = "GB"
     address_size = 2
     default_int_size = 1
     max_instr_length = 3
@@ -35,7 +42,7 @@ class GBA(Architecture):
         "ZN": ["Z", "N"],
     }
     # game boy opcodes in json format from https://github.com/lmmendes/game-boy-opcodes
-    with open("./opcodes.json",'rb') as f:
+    with open(resolve("opcodes.json"),'rb') as f:
         opcodes = json.loads(f.read())["unprefixed"]
 
     def perform_get_instruction_info(self,data,addr):
@@ -120,4 +127,29 @@ class GBA(Architecture):
     def perform_get_instruction_low_level_il(self, data, addr, il):
         return None
 
-GBA.register()
+class GBView(BinaryView):
+    name = "GB"
+    long_name = "Game Boy ROM"
+
+    def __init__(self, data):
+        BinaryView.__init__(self, parent_view = data, file_metadata = data.file)
+        self.platform = Architecture['GB'].standalone_platform
+
+    def init(self):
+        try:
+            hdr = self.parent_view.read(0x134, 0x150)
+            self.rom_banks = struct.unpack("B", hdr[20])[0]
+            self.ram_banks = struct.unpack("B", hdr[21])[0]
+            self.rom_title = hdr[0:14]
+            return True
+        except:
+            log_error(traceback.format_exc())
+            return False
+    
+    def perform_is_executable(self):
+	return True
+
+    def perform_get_entry_point(self):
+	return 0x100
+
+GB.register()
