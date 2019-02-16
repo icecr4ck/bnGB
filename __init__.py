@@ -168,9 +168,9 @@ class GBView(BinaryView):
             
             # Add ROM mappings
             # ROM0
-			self.add_auto_segment(0, 0x4000, 0, 0x4000, SegmentFlag.SegmentReadable | SegmentFlag.SegmentExecutable)
+            self.add_auto_segment(0, 0x4000, 0, 0x4000, SegmentFlag.SegmentReadable | SegmentFlag.SegmentExecutable)
             # RAM1
-			self.add_auto_segment(0x4000, 0x4000, 0x4000, 0x4000, SegmentFlag.SegmentReadable | SegmentFlag.SegmentExecutable)
+            self.add_auto_segment(0x4000, 0x4000, 0x4000, 0x4000, SegmentFlag.SegmentReadable | SegmentFlag.SegmentExecutable)
             
             # Add RAM mappings
             # VRAM
