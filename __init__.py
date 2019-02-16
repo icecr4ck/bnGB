@@ -114,6 +114,7 @@ class GB(Architecture):
                 op_info = self.opcodes[k]
         if op_info is not None:
             tokens.append(InstructionTextToken(InstructionTextTokenType.InstructionToken, op_info['mnemonic']))
+            tokens.append(InstructionTextToken(InstructionTextTokenType.OperandSeparatorToken,' '))
             inst_size = 1
             if 'operand1' in op_info:
                 tokens.append(self.get_token(op_info['operand1'], data))
