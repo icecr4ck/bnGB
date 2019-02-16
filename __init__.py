@@ -45,13 +45,13 @@ class GB(Architecture):
     with open(resolve("opcodes.json"),'rb') as f:
         opcodes = json.loads(f.read())["unprefixed"]
 
-    def perform_get_instruction_info(self,data,addr):
+    def perform_get_instruction_info(self, data, addr):
         opcode = struct.unpack('<B', data[0])[0]
         # Get instruction size
         i_info = InstructionInfo()
-        for k in opcodes.keys():
+        for k in self.opcodes.keys():
             if int(k,16) == opcode:
-                op_info = opcodes[k]
+                op_info = self.opcodes[k]
                 i_info.length = op_info['length']
         # Emulate jump instruction
         if op_info is not None:
@@ -77,14 +77,14 @@ class GB(Architecture):
                         i_info.add_branch(BranchType.TrueBranch, addr+3)
                         i_info.add_branch(BranchType.FalseBranch, arg)
                     else:
-                        _info.add_branch(BranchType.UnconditionalBranch, arg)
+                        i_info.add_branch(BranchType.UnconditionalBranch, arg)
             elif op_info['mnemonic'] == 'RET':
                 i_info.add_branch(BranchType.FunctionReturn)
             elif op_info['mnemonic'] == 'CALL':
                 i_info.add_branch(BranchType.CallDestination, struct.unpack("<H", data[1:3])[0])
         return i_info
 
-    def get_token(operand, data):
+    def get_token(self, operand, data):
         if re.search(r'(d|r|a)8', operand) is not None:
             value = struct.unpack('<B', data[1])[0]
             if re.match(r'(d|r|a)8', operand) is not None:
@@ -109,18 +109,18 @@ class GB(Architecture):
     def perform_get_instruction_text(self, data, addr):
         tokens = []
         opcode = struct.unpack('<B', data[0])[0]
-        for k in opcodes.keys():
+        for k in self.opcodes.keys():
             if int(k,16) == opcode:
-                op_info = opcodes[k]
+                op_info = self.opcodes[k]
         if op_info is not None:
             tokens.append(InstructionTextToken(InstructionTextTokenType.InstructionToken, op_info['mnemonic']))
             inst_size = 1
             if 'operand1' in op_info:
-                tokens.append(get_token(op_info['operand1'], data))
+                tokens.append(self.get_token(op_info['operand1'], data))
                 inst_size = 2
                 if 'operand2' in op_info:
                     tokens.append(InstructionTextToken(InstructionTextTokenType.OperandSeparatorToken,', '))
-                    tokens.append(get_token(op_info['operand2'], data))
+                    tokens.append(self.get_token(op_info['operand2'], data))
                     inst_size = 3
         return tokens, inst_size
 
@@ -189,61 +189,61 @@ class GBView(BinaryView):
             self.add_auto_segment(0xFF80, 0x80, 0, 0, SegmentFlag.SegmentReadable | SegmentFlag.SegmentWritable | SegmentFlag.SegmentExecutable)
 
             # Add special registers
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF00, "P1"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF01, "SB"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF02, "SC"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF04, "DIV"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF05, "TIMA"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF06, "TMA"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF07, "TAC"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF0F, "IF"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF10, "NR10"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF11, "NR11"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF12, "NR12"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xff13, "NR13"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF14, "NR14"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF16, "NR21"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF17, "NR22"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF18, "NR23"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF19, "NR24"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF1A, "NR30"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF1B, "NR31"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF1C, "NR32"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF1D, "NR33"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF1E, "NR34"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF20, "NR41"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF21, "NR42"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF22, "NR43"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF23, "NR44"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF24, "NR50"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF25, "NR51"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF26, "NR52"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF40, "LCDC"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF41, "STAT"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF42, "SCY"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF43, "SCX"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF44, "LY"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF45, "LYC"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF46, "DMA"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF47, "BGP"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF48, "OBP0"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF49, "OBP1"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF4A, "WY"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF4B, "WX"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF4D, "KEY1"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF4F, "VBK"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF51, "HDMA1"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF52, "HDMA2"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF53, "HDMA3"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF54, "HDMA4"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF55, "HDMA5"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF56, "RP"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF68, "BCPS"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF69, "BCPD"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF6A, "OCPS"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF6B, "OCPD"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFF70, "SVBK"))
-            self.define_auto_symbol(Symbol(DataSymbol, 0xFFFF, "IE"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF00, "P1"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF01, "SB"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF02, "SC"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF04, "DIV"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF05, "TIMA"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF06, "TMA"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF07, "TAC"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF0F, "IF"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF10, "NR10"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF11, "NR11"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF12, "NR12"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xff13, "NR13"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF14, "NR14"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF16, "NR21"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF17, "NR22"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF18, "NR23"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF19, "NR24"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF1A, "NR30"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF1B, "NR31"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF1C, "NR32"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF1D, "NR33"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF1E, "NR34"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF20, "NR41"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF21, "NR42"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF22, "NR43"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF23, "NR44"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF24, "NR50"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF25, "NR51"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF26, "NR52"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF40, "LCDC"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF41, "STAT"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF42, "SCY"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF43, "SCX"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF44, "LY"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF45, "LYC"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF46, "DMA"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF47, "BGP"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF48, "OBP0"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF49, "OBP1"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF4A, "WY"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF4B, "WX"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF4D, "KEY1"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF4F, "VBK"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF51, "HDMA1"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF52, "HDMA2"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF53, "HDMA3"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF54, "HDMA4"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF55, "HDMA5"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF56, "RP"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF68, "BCPS"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF69, "BCPD"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF6A, "OCPS"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF6B, "OCPD"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFF70, "SVBK"))
+            self.define_auto_symbol(Symbol(SymbolType.DataSymbol, 0xFFFF, "IE"))
 
             # Define entrypoint
             self.define_auto_symbol(Symbol(SymbolType.FunctionSymbol, 0x100, "_start"))
