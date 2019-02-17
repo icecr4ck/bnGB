@@ -16,30 +16,30 @@ class GB(Architecture):
     default_int_size = 1
     max_instr_length = 3
     regs = {
-        'A': RegisterInfo('A', 1),
-        'B': RegisterInfo('B', 1),
-        'C': RegisterInfo('C', 1),
-        'D': RegisterInfo('D', 1),
-        'E': RegisterInfo('E', 1),
-        'F': RegisterInfo('F', 1),
-        'H': RegisterInfo('H', 1),
-        'L': RegisterInfo('L', 1),
-        'SP': RegisterInfo('SP', 2),
-        'PC': RegisterInfo('PC', 2),
+        'a': RegisterInfo('a', 1),
+        'b': RegisterInfo('b', 1),
+        'c': RegisterInfo('c', 1),
+        'd': RegisterInfo('d', 1),
+        'e': RegisterInfo('e', 1),
+        'f': RegisterInfo('f', 1),
+        'g': RegisterInfo('h', 1),
+        'l': RegisterInfo('l', 1),
+        'sp': RegisterInfo('sp', 2),
+        'pc': RegisterInfo('pc', 2),
     }
     stack_pointer = 'sp'
-    flags = ["Z","N","H","C"]
-    flag_write_types = ["*", "CZN", "ZN"]
+    flags = ["z","n","h","c"]
+    flag_write_types = ["*", "czn", "zn"]
     flag_roles = {
-        'Z': FlagRole.ZeroFlagRole,
-        'N': FlagRole.NegativeSignFlagRole,
-        'H': FlagRole.HalfCarryFlagRole,
-        'C': FlagRole.CarryFlagRole,
+        'z': FlagRole.ZeroFlagRole,
+        'n': FlagRole.NegativeSignFlagRole,
+        'h': FlagRole.HalfCarryFlagRole,
+        'c': FlagRole.CarryFlagRole,
     }
     flags_written_by_flag_write_type = {
-        "*": ["C", "Z", "H", "N"],
-        "CZN": ["C", "Z", "N"],
-        "ZN": ["Z", "N"],
+        "*": ["c", "z", "h", "n"],
+        "czn": ["c", "z", "n"],
+        "zn": ["z", "n"],
     }
     # game boy opcodes in json format from https://github.com/lmmendes/game-boy-opcodes
     with open(resolve("opcodes.json"),'rb') as f:
@@ -255,7 +255,7 @@ class GBView(BinaryView):
 
             # Define entrypoint
             self.define_auto_symbol(Symbol(SymbolType.FunctionSymbol, self.START_ADDR, "_start"))
-            self.add_entry_point(Architecture[GB.name].standalone_platform, self.START_ADDR)
+            self.add_entry_point(self.START_ADDR)
 
             return True
         except:
