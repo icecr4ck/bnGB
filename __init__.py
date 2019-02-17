@@ -275,3 +275,4 @@ class GBView(BinaryView):
 	    return self.START_ADDR
 
 GB.register()
+GBView.register()
