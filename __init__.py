@@ -55,7 +55,7 @@ class GB(Architecture):
         if op_info is not None:
             if op_info['mnemonic'] == 'JR':
                 arg = struct.unpack('<B', data[1:2])[0]
-                if opcode == 0x28 or opcode == 0x38:
+                if opcode == 0x18 or opcode == 0x28 or opcode == 0x38:
                     i_info.add_branch(BranchType.TrueBranch, addr-(~arg&0xff)+1)
                     i_info.add_branch(BranchType.FalseBranch, addr+2)
                 elif opcode == 0x20 or opcode == 0x30:
