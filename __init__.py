@@ -56,7 +56,7 @@ class GB(Architecture):
             if op_info['mnemonic'] == 'JR':
                 arg = struct.unpack('<B', data[1:2])[0]
                 if opcode == 0x28 or opcode == 0x38:
-                    i_info.add_branch(BranchType.TrueBranch, addr-(~arg&0xff)+1)
+                    i_info.add_branch(BranchType.TrueBranch, addr+2+arg)
                     i_info.add_branch(BranchType.FalseBranch, addr+2)
                 elif opcode == 0x20 or opcode == 0x30:
                     i_info.add_branch(BranchType.TrueBranch, addr+2)
@@ -101,7 +101,7 @@ class GB(Architecture):
             else:
                 token = InstructionTextToken(InstructionTextTokenType.PossibleAddressToken, operand)
         else:
-            token = InstructionTextToken(InstructionTextTokenType.RegisterToken, operand)
+            token = InstructionTextToken(InstructionTextTokenType.RegisterToken, operand.lower())
         return token
 
     def perform_get_instruction_text(self, data, addr):
