@@ -86,20 +86,20 @@ class GB(Architecture):
         if re.search(r'(d|r|a)8', operand) is not None:
             value = struct.unpack('<B', data[1])[0]
             if re.match(r'(d|r|a)8', operand) is not None:
-                token = InstructionTextToken(InstructionTextTokenType.IntegerToken, hex(value))
+                token = InstructionTextToken(InstructionTextTokenType.IntegerToken, "0x%.2x" % value, value)
             else:
-                token = InstructionTextToken(InstructionTextTokenType.PossibleAddressToken, hex(value))
+                token = InstructionTextToken(InstructionTextTokenType.PossibleAddressToken, "0x%.4x" % value, value)
         elif re.search(r'(d|r|a)16', operand) is not None:
             value = struct.unpack('<H', data[1:3])[0]
             if re.match(r'(d|r|a)16', operand) is not None:
-                token = InstructionTextToken(InstructionTextTokenType.IntegerToken, hex(value))
+                token = InstructionTextToken(InstructionTextTokenType.IntegerToken, "0x%.4x" % value, value)
             else:
-                token = InstructionTextToken(InstructionTextTokenType.PossibleAddressToken, hex(value))
+                token = InstructionTextToken(InstructionTextTokenType.PossibleAddressToken, "0x%.4x" % value, value)
         elif re.search(r'A|B|C|D|E|F|H|L|(SP)|(PC)', operand) is not None:
             if re.match(r'A|B|C|D|E|F|H|L|(SP)|(PC)', operand) is not None:
                 token = InstructionTextToken(InstructionTextTokenType.RegisterToken, operand.lower())
             else:
-                token = InstructionTextToken(InstructionTextTokenType.PossibleAddressToken, operand)
+                token = InstructionTextToken(InstructionTextTokenType.RegisterToken, operand.lower())
         else:
             token = InstructionTextToken(InstructionTextTokenType.RegisterToken, operand.lower())
         return token
@@ -111,7 +111,7 @@ class GB(Architecture):
         if op_info is not None:
             tokens.append(InstructionTextToken(InstructionTextTokenType.InstructionToken, op_info['mnemonic'].lower()))
             if 'operand1' in op_info:
-                tokens.append(InstructionTextToken(InstructionTextTokenType.OperandSeparatorToken,' '))
+                tokens.append(InstructionTextToken(InstructionTextTokenType.OperandSeparatorToken,'    '))
                 tokens.append(self.get_token(op_info['operand1'], data))
                 if 'operand2' in op_info:
                     tokens.append(InstructionTextToken(InstructionTextTokenType.OperandSeparatorToken,', '))
