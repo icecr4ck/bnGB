@@ -85,11 +85,13 @@ class GB(Architecture):
                 i_info.add_branch(BranchType.CallDestination, struct.unpack("<H", data[1:3])[0])
         return i_info
 
-    def get_token(self, operand, data):
+    def get_token(self, mnemonic, operand, data):
         if re.search(r'(d|r|a)8', operand) is not None:
             value = struct.unpack('<B', data[1])[0]
             if re.match(r'(d|r|a)8', operand) is not None:
                 token = InstructionTextToken(InstructionTextTokenType.IntegerToken, "0x%.2x" % value, value)
+            elif re.match(r'\(a8\)', operand) is not None:
+                token = InstructionTextToken(InstructionTextTokenType.PossibleAddressToken, "0xff%.2x" % value, value)
             else:
                 token = InstructionTextToken(InstructionTextTokenType.PossibleAddressToken, "0x%.4x" % value, value)
         elif re.search(r'(d|r|a)16', operand) is not None:
@@ -117,11 +119,11 @@ class GB(Architecture):
         if op_info is not None:
             tokens.append(InstructionTextToken(InstructionTextTokenType.InstructionToken, op_info['mnemonic'].lower()))
             if 'operand1' in op_info:
-                tokens.append(InstructionTextToken(InstructionTextTokenType.OperandSeparatorToken,'    '))
-                tokens.append(self.get_token(op_info['operand1'], data))
+                tokens.append(InstructionTextToken(InstructionTextTokenType.OperandSeparatorToken, ''.rjust(22 - len(op_info['mnemonic']))))
+                tokens.append(self.get_token(op_info['mnemonic'], op_info['operand1'], data))
                 if 'operand2' in op_info:
                     tokens.append(InstructionTextToken(InstructionTextTokenType.OperandSeparatorToken,', '))
-                    tokens.append(self.get_token(op_info['operand2'], data))
+                    tokens.append(self.get_token(op_info['mnemonic'], op_info['operand2'], data))
         return tokens, op_info['length']
 
     def perform_get_instruction_low_level_il(self, data, addr, il):
