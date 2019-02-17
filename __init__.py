@@ -91,7 +91,7 @@ class GB(Architecture):
             if re.match(r'(d|r|a)8', operand) is not None:
                 token = InstructionTextToken(InstructionTextTokenType.IntegerToken, "0x%.2x" % value, value)
             elif re.match(r'\(a8\)', operand) is not None:
-                token = InstructionTextToken(InstructionTextTokenType.PossibleAddressToken, "0xff%.2x" % value, value)
+                token = InstructionTextToken(InstructionTextTokenType.PossibleAddressToken, "0xff%.2x" % value, value|0xff00)
             else:
                 token = InstructionTextToken(InstructionTextTokenType.PossibleAddressToken, "0x%.4x" % value, value)
         elif re.search(r'(d|r|a)16', operand) is not None:
@@ -119,7 +119,7 @@ class GB(Architecture):
         if op_info is not None:
             tokens.append(InstructionTextToken(InstructionTextTokenType.InstructionToken, op_info['mnemonic'].lower()))
             if 'operand1' in op_info:
-                tokens.append(InstructionTextToken(InstructionTextTokenType.OperandSeparatorToken, ''.rjust(22 - len(op_info['mnemonic']))))
+                tokens.append(InstructionTextToken(InstructionTextTokenType.OperandSeparatorToken, ''.rjust(10 - len(op_info['mnemonic']))))
                 tokens.append(self.get_token(op_info['mnemonic'], op_info['operand1'], data))
                 if 'operand2' in op_info:
                     tokens.append(InstructionTextToken(InstructionTextTokenType.OperandSeparatorToken,', '))
