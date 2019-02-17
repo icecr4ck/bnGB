@@ -49,7 +49,7 @@ class GB(Architecture):
         opcode = struct.unpack('<B', data[0])[0]
         # Get instruction size
         i_info = InstructionInfo()
-        op_info = self.opcodes['0x'+chr(opcode).encode('hex')]
+        op_info = self.opcodes["0x%x" % opcode]
         i_info.length = op_info['length']
         # Emulate jump instruction
         if op_info is not None:
@@ -107,7 +107,7 @@ class GB(Architecture):
     def perform_get_instruction_text(self, data, addr):
         tokens = []
         opcode = struct.unpack('<B', data[0])[0]
-        op_info = self.opcodes['0x'+chr(opcode).encode('hex')]
+        op_info = self.opcodes["0x%x" % opcode]
         if op_info is not None:
             tokens.append(InstructionTextToken(InstructionTextTokenType.InstructionToken, op_info['mnemonic']))
             if 'operand1' in op_info:
