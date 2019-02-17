@@ -56,11 +56,11 @@ class GB(Architecture):
             if op_info['mnemonic'] == 'JR':
                 arg = struct.unpack('<B', data[1:2])[0]
                 if opcode == 0x28 or opcode == 0x38:
-                    i_info.add_branch(BranchType.TrueBranch, arg)
+                    i_info.add_branch(BranchType.TrueBranch, addr-(~arg&0xff)+1)
                     i_info.add_branch(BranchType.FalseBranch, addr+2)
                 elif opcode == 0x20 or opcode == 0x30:
                     i_info.add_branch(BranchType.TrueBranch, addr+2)
-                    i_info.add_branch(BranchType.FalseBranch, arg)
+                    i_info.add_branch(BranchType.FalseBranch, addr-(~arg&0xff)+1)
                 else:
                     i_info.add_branch(BranchType.UnconditionalBranch, arg)
             elif op_info['mnemonic'] == 'JP':
@@ -97,7 +97,7 @@ class GB(Architecture):
                 token = InstructionTextToken(InstructionTextTokenType.PossibleAddressToken, hex(value))
         elif re.search(r'A|B|C|D|E|F|H|L|(SP)|(PC)', operand) is not None:
             if re.match(r'A|B|C|D|E|F|H|L|(SP)|(PC)', operand) is not None:
-                token = InstructionTextToken(InstructionTextTokenType.RegisterToken, operand)
+                token = InstructionTextToken(InstructionTextTokenType.RegisterToken, operand.lower())
             else:
                 token = InstructionTextToken(InstructionTextTokenType.PossibleAddressToken, operand)
         else:
@@ -109,7 +109,7 @@ class GB(Architecture):
         opcode = struct.unpack('<B', data[0])[0]
         op_info = self.opcodes["0x%x" % opcode]
         if op_info is not None:
-            tokens.append(InstructionTextToken(InstructionTextTokenType.InstructionToken, op_info['mnemonic']))
+            tokens.append(InstructionTextToken(InstructionTextTokenType.InstructionToken, op_info['mnemonic'].lower()))
             if 'operand1' in op_info:
                 tokens.append(InstructionTextToken(InstructionTextTokenType.OperandSeparatorToken,' '))
                 tokens.append(self.get_token(op_info['operand1'], data))
