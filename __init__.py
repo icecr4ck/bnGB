@@ -22,7 +22,7 @@ class GB(Architecture):
         'd': RegisterInfo('d', 1),
         'e': RegisterInfo('e', 1),
         'f': RegisterInfo('f', 1),
-        'g': RegisterInfo('h', 1),
+        'h': RegisterInfo('h', 1),
         'l': RegisterInfo('l', 1),
         'sp': RegisterInfo('sp', 2),
         'pc': RegisterInfo('pc', 2),
