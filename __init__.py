@@ -58,14 +58,15 @@ class GB(Architecture):
         if op_info is not None:
             if op_info['mnemonic'] == 'JR':
                 arg = struct.unpack('<B', data[1:2])[0]
+                dest = arg if arg < 128 else (256-arg) * (-1)
                 if opcode == 0x28 or opcode == 0x38:
-                    i_info.add_branch(BranchType.TrueBranch, addr+2+arg)
+                    i_info.add_branch(BranchType.TrueBranch, addr+2+dest)
                     i_info.add_branch(BranchType.FalseBranch, addr+2)
                 elif opcode == 0x20 or opcode == 0x30:
                     i_info.add_branch(BranchType.TrueBranch, addr+2)
-                    i_info.add_branch(BranchType.FalseBranch, addr-(~arg&0xff)+1)
+                    i_info.add_branch(BranchType.FalseBranch, addr+2+dest)
                 else:
-                    i_info.add_branch(BranchType.UnconditionalBranch, addr-(~arg&0xff)+1)
+                    i_info.add_branch(BranchType.UnconditionalBranch, addr+2+dest)
             elif op_info['mnemonic'] == 'JP':
                 if opcode == 0xe9:
                     i_info.add_branch(BranchType.UnconditionalBranch, 0xdead)
@@ -74,7 +75,7 @@ class GB(Architecture):
                     if opcode == 0xca or opcode == 0xda:
                         i_info.add_branch(BranchType.TrueBranch, arg)
                         i_info.add_branch(BranchType.FalseBranch, addr+3)
-                    elif opcode == 0xc0 or opcode == 0xd0:
+                    elif opcode == 0xc2 or opcode == 0xd2:
                         i_info.add_branch(BranchType.TrueBranch, addr+3)
                         i_info.add_branch(BranchType.FalseBranch, arg)
                     else:
@@ -97,7 +98,10 @@ class GB(Architecture):
         elif re.search(r'(d|r|a)16', operand) is not None:
             value = struct.unpack('<H', data[1:3])[0]
             if re.match(r'(d|r|a)16', operand) is not None:
-                token = InstructionTextToken(InstructionTextTokenType.IntegerToken, "0x%.4x" % value, value)
+                if mnemonic == "CALL":
+                    token = InstructionTextToken(InstructionTextTokenType.DataSymbolToken, "sub_%x" % value, value)
+                else:
+                    token = InstructionTextToken(InstructionTextTokenType.IntegerToken, "0x%.4x" % value, value)
             else:
                 token = InstructionTextToken(InstructionTextTokenType.PossibleAddressToken, "0x%.4x" % value, value)
         elif re.search(r'A|B|C|D|E|F|H|L|(SP)|(PC)', operand) is not None:
@@ -119,7 +123,7 @@ class GB(Architecture):
         if op_info is not None:
             tokens.append(InstructionTextToken(InstructionTextTokenType.InstructionToken, op_info['mnemonic'].lower()))
             if 'operand1' in op_info:
-                tokens.append(InstructionTextToken(InstructionTextTokenType.OperandSeparatorToken, ''.rjust(10 - len(op_info['mnemonic']))))
+                tokens.append(InstructionTextToken(InstructionTextTokenType.OperandSeparatorToken, ''.rjust(8 - len(op_info['mnemonic']))))
                 tokens.append(self.get_token(op_info['mnemonic'], op_info['operand1'], data))
                 if 'operand2' in op_info:
                     tokens.append(InstructionTextToken(InstructionTextTokenType.OperandSeparatorToken,', '))
