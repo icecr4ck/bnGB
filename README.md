@@ -1,9 +1,9 @@
-# GB architecture plugin for Binary Ninja
-Author: **icecr4ck**
+# Game Boy architecture plugin for Binary Ninja
+Author: **Hugo Porcher (icecr4ck)**
 
 ## Description
 
-A Binary Ninja plugin to analyze Game Boy ROMs and disassemble bytecode from Game Boy architecture (Sharp LR35902).
+A Binary Ninja plugin to load Game Boy ROMs and disassemble Game Boy architecture bytecode (Sharp LR35902).
 
 This plugin is based on the description of Game Boy CPU opcodes from [here](https://github.com/lmmendes/game-boy-opcodes).
 
@@ -32,10 +32,16 @@ This plugin is based on the description of Game Boy CPU opcodes from [here](http
 
 ## Installation
 
-Run the following command in your Binary Ninja plugins folder:
+Run the following command in your Binary Ninja plugins directory:
 ```bash
-git clone https://github.com/icecr4ck/bnGBA.git
+git clone https://github.com/icecr4ck/bnGB.git
 ```
+
+## Minimum version
+
+This plugin has only been tested on the following version of Binary Ninja:
+
+* release - 1.1.1470
 
 ## References
 
