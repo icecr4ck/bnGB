@@ -1,4 +1,4 @@
-# Game Boy architecture plugin for Binary Ninja
+# Game Boy loader and architecture plugin for Binary Ninja
 Author: **Hugo Porcher (icecr4ck)**
 
 ## Description
