@@ -45,46 +45,71 @@ class GB(Architecture):
     with open(resolve("opcodes.json"),'rb') as f:
         opcodes = json.loads(f.read())["unprefixed"]
 
-    def perform_get_instruction_info(self, data, addr):
-        opcode = struct.unpack('<B', data[0])[0]
-        # Get instruction size
-        i_info = InstructionInfo()
+    def decode_operand(self, operand):
+        if operand in self.regs.keys() or operand in ["hl", "bc", "af", "cb", "de"]:
+            return operand
+        return None
+        
+    def decode_instruction(self, data, addr):
+        if len(data) < 1:
+            return None, None, None, None, None
+        opcode = ord(data[0])
         try:
-            op_info = self.opcodes["0x%x" % opcode]
+            info = self.opcodes[hex(opcode)]
         except KeyError:
+            return None, None, None, None, None
+        instr = info['mnemonic'].lower()
+        length = info['length']
+        operands = []
+        if operand1 in info:
+            operands.append(info['operand1'].lower())
+        if operand2 in info:
+            operands.append(info['operand2'].lower())
+        flags = [f.lower() for f in info['flags']]
+        if length == 2:
+            value = struct.unpack('<B', data[1:2])[0]
+        elif length == 3:
+            value = struct.unpack('<H', data[1:3])[0]
+        else:
+            value = None
+        return instr, length, operands, flags, value
+
+    def perform_get_instruction_info(self, data, addr):
+        instr, length, operands, flags, value = decode_instruction(self, data, addr)
+        if instr is None:
             return None
-        i_info.length = op_info['length']
+        result = InstructionInfo()
+        result.length = length
         # Emulate jump instruction
-        if op_info is not None:
-            if op_info['mnemonic'] == 'JR':
-                arg = struct.unpack('<B', data[1:2])[0]
-                dest = arg if arg < 128 else (256-arg) * (-1)
-                if opcode == 0x28 or opcode == 0x38:
-                    i_info.add_branch(BranchType.TrueBranch, addr+2+dest)
-                    i_info.add_branch(BranchType.FalseBranch, addr+2)
-                elif opcode == 0x20 or opcode == 0x30:
-                    i_info.add_branch(BranchType.TrueBranch, addr+2)
-                    i_info.add_branch(BranchType.FalseBranch, addr+2+dest)
+        if instr.mnemonic == 'JR':
+            arg = struct.unpack('<B', data[1:2])[0]
+            dest = arg if arg < 128 else (256-arg) * (-1)
+            if opcode == 0x28 or opcode == 0x38:
+                result.add_branch(BranchType.TrueBranch, addr+2+dest)
+                result.add_branch(BranchType.FalseBranch, addr+2)
+            elif opcode == 0x20 or opcode == 0x30:
+                result.add_branch(BranchType.TrueBranch, addr+2)
+                result.add_branch(BranchType.FalseBranch, addr+2+dest)
+            else:
+                result.add_branch(BranchType.UnconditionalBranch, addr+2+dest)
+        elif op_info['mnemonic'] == 'JP':
+            if opcode == 0xe9:
+                result.add_branch(BranchType.UnconditionalBranch, 0xdead)
+            else:
+                arg = struct.unpack('<H', data[1:3])[0]
+                if opcode == 0xca or opcode == 0xda:
+                    result.add_branch(BranchType.TrueBranch, arg)
+                    result.add_branch(BranchType.FalseBranch, addr+3)
+                elif opcode == 0xc2 or opcode == 0xd2:
+                    result.add_branch(BranchType.TrueBranch, addr+3)
+                    result.add_branch(BranchType.FalseBranch, arg)
                 else:
-                    i_info.add_branch(BranchType.UnconditionalBranch, addr+2+dest)
-            elif op_info['mnemonic'] == 'JP':
-                if opcode == 0xe9:
-                    i_info.add_branch(BranchType.UnconditionalBranch, 0xdead)
-                else:
-                    arg = struct.unpack('<H', data[1:3])[0]
-                    if opcode == 0xca or opcode == 0xda:
-                        i_info.add_branch(BranchType.TrueBranch, arg)
-                        i_info.add_branch(BranchType.FalseBranch, addr+3)
-                    elif opcode == 0xc2 or opcode == 0xd2:
-                        i_info.add_branch(BranchType.TrueBranch, addr+3)
-                        i_info.add_branch(BranchType.FalseBranch, arg)
-                    else:
-                        i_info.add_branch(BranchType.UnconditionalBranch, arg)
-            elif op_info['mnemonic'] == 'RET':
-                i_info.add_branch(BranchType.FunctionReturn)
-            elif op_info['mnemonic'] == 'CALL':
-                i_info.add_branch(BranchType.CallDestination, struct.unpack("<H", data[1:3])[0])
-        return i_info
+                    result.add_branch(BranchType.UnconditionalBranch, arg)
+        elif op_info['mnemonic'] == 'RET':
+            result.add_branch(BranchType.FunctionReturn)
+        elif op_info['mnemonic'] == 'CALL':
+            result.add_branch(BranchType.CallDestination, struct.unpack("<H", data[1:3])[0])
+        return result
 
     def get_token(self, mnemonic, operand, data):
         if re.search(r'(d|r|a)8', operand) is not None:
@@ -135,7 +160,7 @@ class GB(Architecture):
 
 class GBView(BinaryView):
     name = "GB ROM"
-    long_name = "Nintendo GB ROM"
+    long_name = "GameBoy ROM"
     ROM_SIG_OFFSET = 0x104
     ROM_SIG_LEN = 0x30
     ROM_SIG = "\xCE\xED\x66\x66\xCC\x0D\x00\x0B\x03\x73\x00\x83\x00\x0C\x00\x0D\x00\x08\x11\x1F\x88\x89\x00\x0E\xDC\xCC\x6E\xE6\xDD\xDD\xD9\x99\xBB\xBB\x67\x63\x6E\x0E\xEC\xCC\xDD\xDC\x99\x9F\xBB\xB9\x33\x3E"
