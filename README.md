@@ -41,7 +41,7 @@ git clone https://github.com/icecr4ck/bnGB.git
 
 This plugin has only been tested on the following version of Binary Ninja:
 
-* release - 1.1.1470
+* release - 1.2.1921
 
 ## References
 
