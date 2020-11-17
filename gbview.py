@@ -31,11 +31,9 @@ class GBView(BinaryView):
     def is_valid_for_data(self, data):
         rom_sig = data.read(self.ROM_SIG_OFFSET, self.ROM_SIG_LEN)
         if rom_sig != self.ROM_SIG:
-            log_error("Signature problem")
             return False
         hdr = data.read(self.HDR_OFFSET, self.HDR_SIZE)
         if len(hdr) < self.HDR_SIZE:
-            log_error("HDR problem")
             return False
         return True
 
