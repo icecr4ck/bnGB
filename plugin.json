@@ -15,7 +15,7 @@
 		"Linux" : "",
 		"Windows" : ""
 	},
-	"version": "1.0",
+	"version": "1.0.1",
 	"author": "Hugo Porcher (@icecr4ck)",
 	"minimumbinaryninjaversion": 1200
 }
